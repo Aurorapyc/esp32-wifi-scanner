@@ -20,6 +20,22 @@ build/
 # 第三方驱动与下载缓存
 .drivers/
 
+# 网络安装辅助脚本（不入库，仅本地使用）
+setup-git-push.bat
+cleanup-repo.bat
+github-push-guide.md
+run_fix.bat
+run_fix_eof.bat
+set_proxy.bat
+set_arduino_proxy.ps1
+fix_esp32_download.ps1
+fix_eof_download.ps1
+download_esp32_with_resume.ps1
+download_esp32_with_resume.bat
+esp32下载EOF修复.md
+esp32下载加速修复说明.md
+使用代理安装esp32.md
+
 # 系统文件
 .DS_Store
 Thumbs.db
