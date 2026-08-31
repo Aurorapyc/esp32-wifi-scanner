@@ -1,0 +1,25 @@
+# 编译产物
+build/
+.pio/
+.pioenvs/
+.piolibdeps/
+.pioide/
+
+# 烧录与日志临时文件
+*.log
+*.tmp
+
+# Arduino IDE 与编辑器配置
+.vscode/
+.idea/
+*.swp
+
+# 本地会话配置
+.claude/
+
+# 第三方驱动与下载缓存
+.drivers/
+
+# 系统文件
+.DS_Store
+Thumbs.db
