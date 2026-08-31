@@ -1,117 +1,177 @@
-# ESP32 WiFi 扫描仪
+# ESP32 WiFi Scanner
 
-基于标准 ESP32 开发板打造的 WiFi 扫描工具：扫描周围所有 2.4GHz 无线信号，通过 ESP32 自带的热点网页实时显示每个网络的 **SSID、信号强度(RSSI)、信道、BSSID(MAC)、加密方式**，并按信号强弱自动排序。
+<p align="center">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-ESP32-blue">
+  <img alt="Language" src="https://img.shields.io/badge/Language-C%2B%2B-orange">
+  <img alt="Framework" src="https://img.shields.io/badge/Framework-Arduino-00979D">
+  <img alt="License" src="https://img.shields.io/badge/License-Not%20Selected-lightgrey">
+  <br>
+  Scan nearby 2.4 GHz Wi-Fi networks and view signal strength, channel, and security in your browser — no extra hardware required.
+</p>
 
-不需要任何额外接线，一根 USB 数据线即可运行。
+[简体中文](README_zh-CN.md) · [Technical Document](wifi-scanner-technical-document.md)
 
----
+## Table of Contents
 
-## 功能
+- [Features](#features)
+- [Hardware Requirements](#hardware-requirements)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Web Interface](#web-interface)
+- [API](#api)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-- 扫描周围所有 WiFi，自动按信号强度从强到弱排序
-- 网页实时展示（每 4 秒自动刷新，也可手动「重新扫描」）
-- 每条信号带可视化强度条 + 颜色分级（极强/强/一般/弱/很弱）
-- 显示 SSID、信道、BSSID(MAC)、RSSI(dBm)、加密类型
-- 支持按 SSID 关键字搜索过滤
-- 隐藏网络（不广播 SSID）也能识别，显示为「〈隐藏网络〉」
+## Features
 
-## 硬件准备
+- Scans all nearby 2.4 GHz Wi-Fi networks and sorts them by signal strength.
+- Built-in web page auto-refreshes every 4 seconds.
+- Shows SSID, channel, BSSID, RSSI (signal strength), and encryption type for each network.
+- Visual signal bars with five-level color coding: Excellent, Good, Fair, Weak, and Very Weak.
+- Detects hidden networks that do not broadcast their SSID.
+- Search filter by SSID and a manual rescan button.
+- Dual mode: create your own hotspot (AP) or connect to your home router (STA).
+- No third-party libraries, only the official ESP32 core.
 
-| 物品 | 说明 |
-|------|------|
-| ESP32 开发板 | 标准版即可（ESP32 Dev Module），带 CP2102 串口芯片 |
-| USB 数据线 | 必须是**数据线**（能传数据，不是只能充电的那种） |
-| 电脑 | Windows / macOS / Linux 均可 |
+## Hardware Requirements
 
-> 你的板子串口芯片是 CP2102。如果插上电脑后设备管理器里**看不到 COM 口**，请先安装驱动：
-> 打开本目录下的 `.drivers` 文件夹，双击运行 `install_cp210x.ps1`（需要管理员权限），
-> 或安装其中的 `CP210x_Universal_Windows_Driver.zip`。
+| Item | Requirement |
+| --- | --- |
+| ESP32 board | Standard ESP32 (for example DevKitC, WROOM-32), CP2102 USB-UART chip |
+| USB cable | Must support data transfer |
 
-## 软件环境
+No wiring is required. If the board is not detected by the computer, install the CP210x driver first.
 
-1. 安装 **Arduino IDE**（官网 https://www.arduino.cc/en/software，2.x 版本即可）
-2. 给 Arduino IDE 安装 ESP32 支持：
-   - 打开 `文件 → 首选项`
-   - 在「附加开发板管理器网址」中填入：
-     ```
-     https://espressif.github.io/arduino-esp32/package_esp32_index.json
-     ```
-   - 点击「确定」
-   - 打开 `工具 → 开发板 → 开发板管理器`
-   - 搜索 `esp32`，选择 **esp32 by Espressif Systems**，点击「安装」（下载约 200MB，稍等片刻）
+## Getting Started
 
-## 烧录步骤
+### Software Setup
 
-1. 用 USB 数据线把 ESP32 连到电脑
-2. 打开 Arduino IDE：`文件 → 打开`，选择本目录下的
-   `wifi_scanner\wifi_scanner.ino`
-3. 选择开发板：`工具 → 开发板 → ESP32 Arduino → ESP32 Dev Module`
-4. 选择端口：`工具 → 端口`，选择对应的 COM 口
-   （Windows 上通常叫 `COM3` 或类似名字；如果看不到，见下方常见问题）
-5. 点右上角「→」（上传）。首次编译会比较久，之后会提示 `Connecting...` 并完成上传
-6. 打开 `工具 → 串口监视器`，波特率选 `115200`，可以看到 ESP32 打印出热点地址
+1. Install [Arduino IDE](https://www.arduino.cc/en/software) 2.x.
+2. Add the ESP32 board package URL:
+   - Open `File → Preferences`.
+   - In **Additional boards manager URLs**, add:
+   ```
+   https://espressif.github.io/arduino-esp32/package_esp32_index.json
+   ```
+3. Open Boards Manager (`Tools → Board → Boards Manager`), search for `esp32`, and install `esp32 by Espressif Systems`.
 
-## 使用方法
+> The board package is downloaded from GitHub. In restricted networks, the download may fail. Configure a proxy or use a GitHub mirror if needed.
 
-1. 烧录完成后，ESP32 会自动创建一个 WiFi 热点：**`WiFi-Scanner`**，密码 **`12345678`**
-2. 用手机或电脑连接这个热点
-3. 浏览器打开 **`http://192.168.4.1`**（如果打不开，也可以在手机热点设置里查看 ESP32 分配的 IP，通常是 192.168.4.1 或 192.168.4.2）
-4. 即可看到周围所有 WiFi 信号，页面每 4 秒自动刷新一次
+### Flashing
 
-> 提示：因为网页就运行在 ESP32 的热点里，扫描时 ESP32 需要短暂切换信道，页面会自动重连刷新，属正常现象。
+1. Open `wifi_scanner/wifi_scanner.ino` in Arduino IDE.
+2. Select the board: `Tools → Board → ESP32 Arduino → ESP32 Dev Module`.
+3. Select the port: `Tools → Port`, choose the correct COM port.
+4. Click **Upload** and wait for the build and upload to finish.
 
-## 修改热点名称 / 密码
+If the upload hangs at `Connecting...`, hold the BOOT button, click Upload, and release the button when upload starts.
 
-打开 `wifi_scanner.ino`，找到文件开头的「配置区」：
+## Usage
 
-```cpp
-const char* AP_SSID = "WiFi-Scanner";   // 热点名称
-const char* AP_PASS = "12345678";       // 热点密码（至少 8 位，留空=开放热点）
+The firmware supports two modes. Open the Serial Monitor (baud rate 115200) to see which mode is active and which address to visit.
+
+### AP Mode (default)
+
+Leave `STA_SSID` empty. The ESP32 creates a hotspot:
+
+- SSID: `WiFi-Scanner`
+- Password: `12345678`
+- URL: `http://192.168.4.1`
+
+Connect a phone or computer to the hotspot and open the URL in a browser.
+
+### STA Mode (connect to your router)
+
+Fill in `STA_SSID` and `STA_PASS` at the top of `wifi_scanner/wifi_scanner.ino`. The ESP32 joins your router and prints its local IP in the Serial Monitor. You can also find it in the router's DHCP client list.
+
+### Connection Fallback
+
+If the router connection fails within 15 seconds, the firmware automatically falls back to AP mode. Note that the web server is not available during the first 15 seconds after boot.
+
+## Configuration
+
+Edit the configuration section at the top of `wifi_scanner/wifi_scanner.ino`.
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `AP_SSID` | `WiFi-Scanner` | Hotspot name |
+| `AP_PASS` | `12345678` | Hotspot password, at least 8 characters, empty means open hotspot |
+| `STA_SSID` | empty | Your router name, leave empty for AP mode |
+| `STA_PASS` | empty | Your router password |
+| `SCAN_INTERVAL_MS` | `4000` | Scan interval in milliseconds |
+
+## Web Interface
+
+- The top cards show the number of networks, the displayed count, and the last update time.
+- The table is sorted by signal strength and shows signal, SSID, channel, BSSID, RSSI, and encryption.
+- The search box filters by SSID, and the Rescan button triggers a manual scan.
+- The page auto-refreshes every 4 seconds.
+
+### Signal Strength Levels
+
+| Level | RSSI Range (dBm) |
+| --- | --- |
+| Excellent | >= -50 |
+| Good | -60 to -50 |
+| Fair | -70 to -60 |
+| Weak | -80 to -70 |
+| Very Weak | < -80 |
+
+## API
+
+The firmware embeds a small HTTP server:
+
+| Endpoint | Description |
+| --- | --- |
+| `/` | Web page |
+| `/api/networks` | Latest scan results, JSON format |
+| `/scan` | Trigger a manual scan |
+
+Example response:
+
+```json
+{
+  "count": 12,
+  "scanning": 0,
+  "networks": [
+    {
+      "ssid": "MyWiFi",
+      "bssid": "AA:BB:CC:DD:EE:FF",
+      "rssi": -45,
+      "channel": 6,
+      "enc": "WPA2"
+    }
+  ]
+}
 ```
 
-改完后重新上传即可。
-
-## 想改成连接家里的路由器？（可选）
-
-如果你希望 ESP32 连入家里路由器、在同一局域网内访问扫描页面（比如电脑和 ESP32 连同一个 WiFi），
-把配置区的 `STA_SSID` 和 `STA_PASS` 填上：
-
-```cpp
-const char* STA_SSID = "你家WiFi名称";
-const char* STA_PASS = "你家WiFi密码";
-```
-
-这样 ESP32 会去连接路由器，串口监视器会打印出它的局域网 IP（例如 `192.168.1.100`），用浏览器访问该 IP 即可。留空则保持热点模式。
-
-## 项目结构
+## Project Structure
 
 ```
 esp32/
 ├── wifi_scanner/
-│   └── wifi_scanner.ino     # Arduino 固件（全部代码都在这里）
-└── README.md                # 本说明
+│   └── wifi_scanner.ino               # Firmware, all code in one file
+├── README.md                          # This file
+├── README_zh-CN.md                    # Chinese documentation
+├── wifi-scanner-technical-document.md # Technical document
+├── CHANGELOG.md                       # Version history
+└── .gitignore
 ```
 
-代码依赖：仅使用 ESP32 官方核心自带的 `WiFi.h` 和 `WebServer.h`，**无需安装任何第三方库**。
+## Troubleshooting
 
-## 常见问题
+**Cannot detect the COM port.** Install the CP210x driver, then re-plug the USB cable.
 
-**Q：上传时一直卡在 `Connecting...` 或报 `Failed to connect`**
-A：按住板子上的 **BOOT/EN** 按钮不松手，点上传，出现 `Connecting...` 时松手；或者换一根 USB 数据线。
+**Upload hangs at Connecting...** Hold the BOOT button while uploading, or try another USB cable.
 
-**Q：设备管理器里没有 COM 口**
-A：驱动没装好。运行 `.drivers` 文件夹里的 `install_cp210x.ps1`（右键 → 用 PowerShell 运行，允许管理员权限），或者安装 `CP210x_Universal_Windows_Driver.zip`。装好后重新插拔 USB 线。
+**Cannot open the web page.** Make sure the device is connected to the correct hotspot or network and the IP is correct. Some phones show a "no internet connection" prompt when joining a hotspot, choose to stay connected.
 
-**Q：打开 192.168.4.1 打不开**
-A：确认手机/电脑确实连上了 `WiFi-Scanner` 热点；部分手机连热点时会提示「无互联网连接」，选择「保持连接」即可。也可以查看手机热点详情里 ESP32 分配的 IP，换那个 IP 访问。
+**The list is empty.** Wait for two refresh cycles. If there are no 2.4 GHz networks nearby, the result is empty. The ESP32 does not support 5 GHz.
 
-**Q：网页能打开但列表是空的**
-A：扫描需要几秒，等页面自动刷新两次；如果周围真的没有 2.4GHz 网络（比如路由器开了 5GHz-only）就扫不到。ESP32 只支持 2.4GHz。
+**Connected to the router but cannot find the IP.** Check the Serial Monitor. If it shows a connection failure, visit `http://192.168.4.1` instead.
 
-**Q：扫描时手机显示热点掉线/无网络**
-A：这是正常的。ESP32 扫描时会短暂切换信道，导致热点瞬间不可用，页面会自动重连刷新。
+## License
 
-## 相关文档
-
-- [技术文档](wifi-scanner-technical-document.md)
-- [版本记录](CHANGELOG.md)
+This project currently does not include an explicit license. All rights reserved. Contact the author for permission, or choose an open-source license.

@@ -14,7 +14,8 @@
 ### 文档
 
 - 新增技术文档 `wifi-scanner-technical-document.md`。
-- 新增 `README.md` 使用说明和 `.gitignore` 忽略规则。
+- 新增中英文双语文档：`README.md`（英文）和 `README_zh-CN.md`（中文）。
+- 新增 `.gitignore` 忽略规则。
 
 ### 其他
 
